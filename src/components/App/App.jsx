@@ -23,7 +23,7 @@ export class App extends Component {
       this.setState({ status: Status.PENDING });
       searchObject.searchPhrase = this.state.searchQuery;
 
-      searchObject.safesearch = false;
+      searchObject.safesearch = true;
 
       try {
         const data = await getPhoto(searchObject);
