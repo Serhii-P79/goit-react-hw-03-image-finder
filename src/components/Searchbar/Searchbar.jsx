@@ -1,5 +1,5 @@
 import { FcSearch } from 'react-icons/fc';
-
+import PropTypes from 'prop-types';
 import './Searchbar.scss';
 
 export function Searchbar({ onSubmit }) {
@@ -23,3 +23,5 @@ export function Searchbar({ onSubmit }) {
     </header>
   );
 }
+
+Searchbar.propTypes = { onSubmit: PropTypes.func.isRequired };

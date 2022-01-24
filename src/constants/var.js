@@ -17,3 +17,12 @@ export const searchObject = {
     this.safesearch = true;
   },
 };
+
+export const Status = {
+  IDLE: 'idle',
+  PENDING: 'pending',
+  RESOLVE: 'resolve',
+  REJECTED: 'rejected',
+};
+
+Object.freeze(Status);

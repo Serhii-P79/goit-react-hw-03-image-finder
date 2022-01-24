@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import './ImageGalleryItem.scss';
 
 export function ImageGalleryItem({ webformatURL, largeImageURL, onClick }) {
@@ -14,3 +15,9 @@ export function ImageGalleryItem({ webformatURL, largeImageURL, onClick }) {
     </li>
   );
 }
+
+ImageGalleryItem.propTypes = {
+  webformatURL: PropTypes.string.isRequired,
+  largeImageURL: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+};

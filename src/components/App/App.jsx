@@ -1,7 +1,8 @@
 import { Component } from 'react';
-import { Button, Searchbar, Modal, ImageGallery } from 'components';
+import { animateScroll as scroll } from 'react-scroll';
+import { Button, Searchbar, Modal, ImageGallery, Loader } from 'components';
 import { getPhoto } from 'services/PixabayApi';
-import { searchObject } from 'constants/var';
+import { searchObject, Status } from 'constants/var';
 import './App.scss';
 
 export class App extends Component {
@@ -11,36 +12,47 @@ export class App extends Component {
     searchQuery: '',
     imgUrl: '',
     page: 1,
+    status: Status.IDLE,
   };
-
-  async componentDidMount() {
-    // const data = await getPhoto(searchObject);
-    // console.log(data);
-    // this.setState({ images: [...data.hits] });
-    // console.log('componentDidMount');
-  }
 
   async componentDidUpdate(nextProps, nextState) {
     // console.log('componentDidUpdate');
     // console.log(nextState.searchQuery === this.state.searchQuery);
 
     if (nextState.searchQuery !== this.state.searchQuery) {
+      this.setState({ status: Status.PENDING });
       searchObject.searchPhrase = this.state.searchQuery;
+
       searchObject.safesearch = false;
-      const data = await getPhoto(searchObject);
-      this.setState({ images: [...data.hits] });
+
+      try {
+        const data = await getPhoto(searchObject);
+        this.setState({ images: [...data.hits] });
+        this.setState({ status: Status.RESOLVE });
+      } catch (eror) {
+        this.setState({ status: Status.REJECTED });
+      }
       // console.log('ssss');
     }
 
     if (nextState.page !== this.state.page) {
+      this.setState({ status: Status.PENDING });
       searchObject.page = this.state.page;
       // console.log('новый лист');
-      const data = await getPhoto(searchObject);
-      this.setState(prevST => {
-        return this.state.page === 1
-          ? { images: [...data.hits] }
-          : { images: [...prevST.images, ...data.hits] };
-      });
+
+      try {
+        const data = await getPhoto(searchObject);
+        this.setState(prevST => {
+          return this.state.page === 1
+            ? { images: [...data.hits] }
+            : { images: [...prevST.images, ...data.hits] };
+        });
+        this.setState({ status: Status.RESOLVE }, () => {
+          scroll.scrollToBottom();
+        });
+      } catch (error) {
+        this.setState({ status: Status.REJECTED });
+      }
       // console.log('вввв');
     }
   }
@@ -78,12 +90,34 @@ export class App extends Component {
   };
 
   render() {
-    const { showModal, images, imgUrl } = this.state;
+    const { showModal, images, imgUrl, status } = this.state;
+
+    // if (status === Status.IDLE) {
+    //   return <div>Введите строку поиска</div>;
+    // }
+    // if (status === Status.PENDING) {
+    //   return <Loader />;
+    // }
+    // if (status === Status.RESOLVE) {
+    //   return <ImageGallery images={images} onClick={this.imgWindowModal} />;
+    // }
+
+    // if (status === Status.REJECTED) {
+    //   return <div>Что то пошло не так!!!</div>;
+    // }
 
     return (
       <div className="App">
         <Searchbar onSubmit={this.updSearchQuery} />
-        <ImageGallery images={images} onClick={this.imgWindowModal} />
+        {/* {status === Status.IDLE && <div>Введите строку поиска</div>} */}
+        {status === Status.PENDING && (
+          <Modal onClose={() => {}}>
+            <Loader />
+          </Modal>
+        )}
+        {status === Status.RESOLVE && (
+          <ImageGallery images={images} onClick={this.imgWindowModal} />
+        )}
         {images.length !== 0 && <Button onClick={this.nextPageRequest} />}
         {showModal && (
           <Modal onClose={this.toggleModal}>
