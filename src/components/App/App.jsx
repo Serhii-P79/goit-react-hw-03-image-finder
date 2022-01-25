@@ -22,12 +22,20 @@ export class App extends Component {
     if (nextState.searchQuery !== this.state.searchQuery) {
       this.setState({ status: Status.PENDING });
       searchObject.searchPhrase = this.state.searchQuery;
-
       searchObject.safesearch = true;
 
       try {
         const data = await getPhoto(searchObject);
-        this.setState({ images: [...data.hits] });
+        //console.log(data);
+        this.setState({
+          images: [
+            ...data.hits.map(({ id, webformatURL, largeImageURL }) => ({
+              id,
+              webformatURL,
+              largeImageURL,
+            })),
+          ],
+        });
         this.setState({ status: Status.RESOLVE });
       } catch (eror) {
         this.setState({ status: Status.REJECTED });
@@ -36,7 +44,7 @@ export class App extends Component {
     }
 
     if (nextState.page !== this.state.page) {
-      this.setState({ status: Status.PENDING });
+      this.setState({ status: Status.PENDINGD });
       searchObject.page = this.state.page;
       // console.log('новый лист');
 
@@ -44,8 +52,25 @@ export class App extends Component {
         const data = await getPhoto(searchObject);
         this.setState(prevST => {
           return this.state.page === 1
-            ? { images: [...data.hits] }
-            : { images: [...prevST.images, ...data.hits] };
+            ? {
+                images: [
+                  ...data.hits.map(({ id, webformatURL, largeImageURL }) => ({
+                    id,
+                    webformatURL,
+                    largeImageURL,
+                  })),
+                ],
+              }
+            : {
+                images: [
+                  ...prevST.images,
+                  ...data.hits.map(({ id, webformatURL, largeImageURL }) => ({
+                    id,
+                    webformatURL,
+                    largeImageURL,
+                  })),
+                ],
+              };
         });
         this.setState({ status: Status.RESOLVE }, () => {
           scroll.scrollToBottom();
@@ -70,14 +95,15 @@ export class App extends Component {
     });
   };
 
-  updSearchQuery = e => {
+  updSearchQuery = (e, searchQuery) => {
     e.preventDefault();
     // console.log(e);
+    // console.log(searchQuery);
     // console.log(e.target.elements.searchQuery.value);
     // searchObject.defOpt();
     //searchObject.page = 1;
     this.setState({
-      searchQuery: e.target.elements.searchQuery.value,
+      searchQuery,
       page: 1,
     });
   };
@@ -110,12 +136,12 @@ export class App extends Component {
       <div className="App">
         <Searchbar onSubmit={this.updSearchQuery} />
         {/* {status === Status.IDLE && <div>Введите строку поиска</div>} */}
-        {status === Status.PENDING && (
+        {(status === Status.PENDING || status === Status.PENDINGD) && (
           <Modal onClose={() => {}}>
             <Loader />
           </Modal>
         )}
-        {status === Status.RESOLVE && (
+        {(status === Status.RESOLVE || status === Status.PENDINGD) && (
           <ImageGallery images={images} onClick={this.imgWindowModal} />
         )}
         {images.length !== 0 && <Button onClick={this.nextPageRequest} />}
